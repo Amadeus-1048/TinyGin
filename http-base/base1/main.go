@@ -14,6 +14,9 @@ func main() {
 	// 第一个参数是地址，:9999表示在 9999 端口监听。
 	// 第二个参数则代表处理所有的HTTP请求的实例，nil 代表使用标准库中的实例处理，即基于net/http标准库实现Web框架的入口。
 	log.Fatal(http.ListenAndServe(":9999", nil))
+	// 第二个参数handler的类型是一个接口，需要实现方法 ServeHTTP
+	// 只要传入任何实现了 ServerHTTP 接口的实例，所有的HTTP请求，就都交给了该实例处理
+	// 下面将在base2/main.go中实现一个handler实例engine
 }
 
 // handler echoes r.URL.Path
