@@ -1,3 +1,3 @@
-module TinyGin/http-base/base3/tinyGin
+module tinyGin
 
 go 1.18
