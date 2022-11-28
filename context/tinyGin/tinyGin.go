@@ -1,34 +1,37 @@
 package tinyGin
 
 import (
-	"fmt"
 	"net/http"
 )
+
+/*
+http-base3的代码还仅仅实现了net/http包所提供的基本功能，并没有提供一些更强大的功能
+首先路由(router)是一个独立的概念，可以独立出来，方便后续对路由功能进行增强，
+然后如果想要支持中间件功能，就需要在一个请求当中共享上下文信息，因此我们还需要有一个上下文(Context)模块。
+
+将router相关的代码独立后，tinyGin.go简单了不少
+在调用 router.handle 之前，构造了一个 Context 对象
+*/
 
 // HandlerFunc defines the request handler used by tinyGin
 // 定义路由映射的处理方法
 // 对Web服务来说，就是根据请求*http.Request，构造响应http.ResponseWriter
-type HandlerFunc func(w http.ResponseWriter, r *http.Request)
+type HandlerFunc func(ctx *Context)
 
 // Engine implement the interface of ServeHTTP
 // 定义了一个结构体Engine，实现了ServeHTTP接口
 type Engine struct {
-	router map[string]HandlerFunc // 路由映射表
+	router *router // 路由映射表
 }
 
 // New is the constructor of tinyGin.Engine
 func New() *Engine {
-	return &Engine{router: make(map[string]HandlerFunc)}
+	return &Engine{router: newRouter()}
 }
 
 // 添加路由
 func (e *Engine) addRoute(method, pattern string, handler HandlerFunc) {
-	// 路由映射表的 key 由请求方法和静态路由地址构成
-	// 例如 GET-/、GET-/hello、POST-/hello
-	// 这样针对相同的路由，如果请求方法不同,可以映射不同的处理方法(Handler)
-	// 路由映射表的 value 是用户映射的处理方法
-	key := method + "-" + pattern
-	e.router[key] = handler
+	e.router.addRoute(method, pattern, handler)
 }
 
 // GET defines the method to add GET request
@@ -44,12 +47,8 @@ func (e *Engine) POST(pattern string, handler HandlerFunc) {
 
 // Engine实现的 ServeHTTP 方法的作用：解析请求的路径，查找路由映射表，如果查到，就执行注册的处理方法。如果查不到，就返回 404 NOT FOUND
 func (e *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	key := req.Method + "-" + req.URL.Path
-	if handler, ok := e.router[key]; ok {
-		handler(w, req)
-	} else {
-		fmt.Fprintf(w, "404 NOT FOUND: %s\n", req.URL)
-	}
+	c := newContext(w, req)
+	e.router.handle(c)
 }
 
 // Run defines the method to start a http server
