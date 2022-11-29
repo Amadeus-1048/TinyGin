@@ -30,3 +30,14 @@ func main() {
 
 	r.Run(":9999")
 }
+
+/*
+测试方法
+curl -i http://localhost:9999/
+
+curl "http://localhost:9999/hello?name=amadeus"
+
+curl "http://localhost:9999/login" -X POST -d 'username=amadeus&password=1240'
+
+curl "http://localhost:9999/xxx"
+*/
