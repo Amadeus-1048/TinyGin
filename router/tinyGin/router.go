@@ -1,8 +1,8 @@
 package tinyGin
 
 import (
-	"log"
 	"net/http"
+	"strings"
 )
 
 /*
@@ -12,18 +12,68 @@ router 的 handle 方法作了一个细微的调整，即 handler 的参数，�
 */
 
 type router struct {
-	handlers map[string]HandlerFunc
+	roots    map[string]*node       // 存储每种请求方式的 Trie 树根节点
+	handlers map[string]HandlerFunc // 存储每种请求方式的 HandlerFunc
 }
 
+// roots key eg, roots['GET'] roots['POST']
+// handlers key eg, handlers['GET-/p/:lang/doc'], handlers['POST-/p/book']
+
 func newRouter() *router {
-	return &router{handlers: make(map[string]HandlerFunc)}
+	return &router{
+		roots:    make(map[string]*node),
+		handlers: make(map[string]HandlerFunc),
+	}
+}
+
+// Only one * is allowed
+func parsePattern(pattern string) []string {
+	items := strings.Split(pattern, "/")
+	parts := make([]string, 0)
+	for _, item := range items {
+		if item != "" {
+			parts = append(parts, item)
+			if item[0] == '*' {
+				break
+			}
+		}
+	}
+	return parts
 }
 
 func (r *router) addRoute(method, pattern string, handler HandlerFunc) {
-	// %5s表示最多读取5个rune来生成一个字符串
-	log.Printf("Route %4s - %s", method, pattern)
+	parts := parsePattern(pattern)
+
 	key := method + "-" + pattern
+	if _, ok := r.roots[method]; !ok {
+		r.roots[method] = &node{}
+	}
+	r.roots[method].insert(pattern, parts, 0)
 	r.handlers[key] = handler
+}
+
+func (r *router) getRoute(method, path string) (*node, map[string]string) {
+	searchParts := parsePattern(path)
+	params := make(map[string]string)
+	root, ok := r.roots[method]
+	if !ok {
+		return nil, nil
+	}
+	n := root.search(searchParts, 0)
+	if n != nil {
+		parts := parsePattern(n.pattern)
+		for index, part := range parts {
+			if part[0] == ':' {
+				params[part[1:]] = searchParts[index]
+			}
+			if part[0] == '*' && len(part) > 1 {
+				params[part[1:]] = strings.Join(searchParts[index:], "/")
+				break
+			}
+		}
+		return n, params
+	}
+	return nil, nil
 }
 
 func (r *router) handle(c *Context) {
