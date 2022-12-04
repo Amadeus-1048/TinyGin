@@ -9,7 +9,7 @@ type node struct {
 	isWild   bool    // 是否精确匹配，例如 part含有 : 或 * 时为true
 }
 
-// 找到第一个匹配成功的节点，用于插入
+// 找到并返回第一个匹配成功的节点，用于插入
 func (n *node) matchChild(part string) *node {
 	for _, child := range n.children {
 		if child.part == part || child.isWild {
@@ -19,7 +19,7 @@ func (n *node) matchChild(part string) *node {
 	return nil
 }
 
-// 找到所有匹配成功的节点，用于查找
+// 找到并返回所有匹配成功的节点，用于查找
 func (n *node) matchChildren(part string) []*node {
 	nodes := make([]*node, 0)
 	for _, child := range n.children {
@@ -35,7 +35,7 @@ func (n *node) matchChildren(part string) []*node {
 
 // 插入功能：递归查找每一层的节点，如果没有匹配到当前part的节点，则新建一个
 func (n *node) insert(pattern string, parts []string, height int) {
-	// 到了叶子节点，给其pattern字段赋值
+	// 到了叶子节点，即已经匹配了 parts 中的所有 part ，该给当前叶子结点的pattern字段赋值了
 	if len(parts) == height {
 		n.pattern = pattern
 		return
@@ -50,9 +50,10 @@ func (n *node) insert(pattern string, parts []string, height int) {
 			part:   part,
 			isWild: part[0] == ':' || part[0] == '*',
 		}
+		// 将新创建的节点加入当前节点的子节点集合
 		n.children = append(n.children, child)
 	}
-	// 递归插入
+	// 递归查找要插入的位置
 	child.insert(pattern, parts, height+1)
 }
 
@@ -67,9 +68,9 @@ func (n *node) search(parts []string, height int) *node {
 	}
 	// 获取当前height位置的part
 	part := parts[height]
-	// 查询当前node与part相等的所有children节点
+	// 查询当前节点的children中与part相等的所有子节点
 	children := n.matchChildren(part)
-	// 遍历符合条件的子节点，递归查询
+	// 遍历符合条件的子节点，递归查询（只需要找到第一个完全符合的路径）
 	for _, child := range children {
 		result := child.search(parts, height+1)
 		if result != nil {
