@@ -77,9 +77,13 @@ func (r *router) getRoute(method, path string) (*node, map[string]string) {
 }
 
 func (r *router) handle(c *Context) {
-	key := c.Method + "-" + c.Path
-	if handler, ok := r.handlers[key]; ok {
-		handler(c)
+	n, params := r.getRoute(c.Method, c.Path)
+	if n != nil {
+		key := c.Method + "-" + c.Path
+		// 在调用匹配到的handler前，将解析出来的路由参数赋值给了c.Params
+		c.Params = params
+		// 这样就能够在handler中，通过Context对象访问到具体的值了
+		r.handlers[key](c)
 	} else {
 		c.String(http.StatusNotFound, "404 NOT FOUND: %s\n", c.Path)
 	}
