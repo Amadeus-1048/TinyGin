@@ -21,10 +21,14 @@ func main() {
 		c.String(http.StatusOK, "hello %s, you're at %s\n", c.Query("name"), c.Path)
 	})
 
-	r.POST("/login", func(c *tinyGin.Context) {
+	r.GET("/hello/:name", func(c *tinyGin.Context) {
+		// expect /hello/amadeus
+		c.String(http.StatusOK, "hello %s, you're at %s\n", c.Query("name"), c.Path)
+	})
+
+	r.GET("/assets/*filepath", func(c *tinyGin.Context) {
 		c.Json(http.StatusOK, tinyGin.H{
-			"username": c.PostForm("username"),
-			"password": c.PostForm("password"),
+			"filepath": c.Param("filepath"),
 		})
 	})
 
