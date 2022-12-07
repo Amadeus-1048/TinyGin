@@ -87,20 +87,25 @@ func (group *RouterGroup) POST(pattern string, handler HandlerFunc) {
 }
 
 // Use is defined to add middleware to the group
+// 中间件应该与Group对象绑定，因为需要中间件的时候，肯定是要对一类路由进行处理。如果仅仅单个路由需要，那完全可以将逻辑放入到对应路由的处理函数里面
 func (group *RouterGroup) Use(middlewares ...HandlerFunc) {
+	// 将中间件添加到group中
 	group.middlewares = append(group.middlewares, middlewares...)
 }
 
 // Engine实现的 ServeHTTP 方法的作用：解析请求的路径，查找路由映射表，如果查到，就执行注册的处理方法。如果查不到，就返回 404 NOT FOUND
 func (e *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	middlewares := []HandlerFunc{}
+	// 查出本次请求所有需要调用的中间件
 	for _, group := range e.groups {
 		if strings.HasPrefix(req.URL.Path, group.prefix) {
+			// 保持下来放到context中
 			middlewares = append(middlewares, group.middlewares...)
 		}
 	}
 	c := newContext(w, req)
 	c.handlers = middlewares
+	// 查出本次请求对应的处理函数，然后再依次开始请求
 	e.router.handle(c)
 }
 

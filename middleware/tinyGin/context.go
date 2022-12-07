@@ -36,8 +36,8 @@ type Context struct {
 	// response info
 	StatusCode int
 	// middleware
-	handlers []HandlerFunc
-	index    int // 记录当前执行到第几个中间件
+	handlers []HandlerFunc // 所有需要实现的handler方法
+	index    int           // 当前执行的位置，即记录当前执行到第几个中间件
 }
 
 func newContext(w http.ResponseWriter, req *http.Request) *Context {
@@ -51,6 +51,7 @@ func newContext(w http.ResponseWriter, req *http.Request) *Context {
 }
 
 // Next 当在中间件中调用Next方法时，控制权交给了下一个中间件，直到调用到最后一个中间件，然后再从后往前，调用每个中间件在Next方法之后定义的部分
+// 因为有一类中间件需要处理流程开始之前执行，在处理流程结束之后才结束，比如实现一个记录处理时间的中间件
 func (c *Context) Next() {
 	c.index++
 	s := len(c.handlers)
