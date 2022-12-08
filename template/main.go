@@ -29,22 +29,6 @@ func main() {
 	// 将tinyGin.Logger()应用在了全局，所有的路由都会应用该中间件
 	r.Use(tinyGin.Logger())
 
-	r.GET("/index", func(c *tinyGin.Context) {
-		c.HTML(http.StatusOK, "<h1>Index Page</h1>")
-	})
-
-	v1 := r.Group("/v1")
-	{
-		v1.GET("/", func(c *tinyGin.Context) {
-			c.HTML(http.StatusOK, "<h1>Hello TinyGin</h1>")
-		})
-
-		v1.GET("/hello", func(c *tinyGin.Context) {
-			// expect /hello?name=amadeus
-			c.String(http.StatusOK, "hello %s, you're at %s\n", c.Query("name"), c.Path)
-		})
-	}
-
 	v2 := r.Group("/v2")
 	// v2 group middleware
 	v2.Use(middlewareForV2())
