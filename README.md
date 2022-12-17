@@ -10,7 +10,7 @@ Web框架 - TinyGin
 - [x] 上下文  —  context
 - [x] 前缀树路由  —  trie
 - [x] 分组控制  —  group
-- [ ] 中间件  —  middleware
-- [ ] 模版  —  template
-- [ ] 错误恢复  —  panic-recover
+- [x] 中间件  —  middleware
+- [ ] ~~模版  —  template~~
+- [x] 错误恢复  —  panic-recover
 
